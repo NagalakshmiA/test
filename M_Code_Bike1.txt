@@ -1,0 +1,28 @@
+let
+    Source = Excel.Workbook(File.Contents("C:\Users\nagal\Desktop\naga\Bike_Data.xlsx"), null, true),
+    TrainingSample2_Sheet = Source{[Item="TrainingSample2",Kind="Sheet"]}[Data],
+    #"Promoted Headers" = Table.PromoteHeaders(TrainingSample2_Sheet, [PromoteAllScalars=true]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Region", type text}, {"Country", type text}, {"Customer", type text}, {"Business Segment", type text}, {"Category", type text}, {"Model", type text}, {"Color", type text}, {"SalesDate", type date}, {"ListPrice", type number}, {"UnitPrice", type number}, {"OrderQty", Int64.Type}}),
+    #"Multiplication of OrderQTY&UnitPrice" = Table.AddColumn(#"Changed Type", "Multiplication", each [UnitPrice] * [OrderQty], type number),
+    #"C olumn Cost" = Table.RenameColumns(#"Multiplication of OrderQTY&UnitPrice",{{"Multiplication", "cost"}}),
+    #"Mul of OrderQTY&ListPrice" = Table.AddColumn(#"C olumn Cost", "Multiplication", each [OrderQty] * [ListPrice], type number),
+    #"Column Sales" = Table.RenameColumns(#"Mul of OrderQTY&ListPrice",{{"Multiplication", "sales"}}),
+    #"Subtraction of Sales and Cost" = Table.AddColumn(#"Column Sales", "Subtraction", each [sales] - [cost], type number),
+    #"Column Profit" = Table.RenameColumns(#"Subtraction of Sales and Cost",{{"Subtraction", "Profit"}}),
+    Year = Table.AddColumn(#"Column Profit", "Year", each Date.Year([SalesDate]), Int64.Type),
+    #"Inserted Start of Year" = Table.AddColumn(Year, "Start of Year", each Date.StartOfYear([SalesDate]), type date),
+    Month = Table.AddColumn(#"Inserted Start of Year", "Month", each Date.Month([SalesDate]), Int64.Type),
+    #"Month Name" = Table.AddColumn(Month, "Month Name", each Date.MonthName([SalesDate]), type text),
+    #"Quarter of Year" = Table.AddColumn(#"Month Name", "Quarter", each Date.QuarterOfYear([SalesDate]), Int64.Type),
+    #"Week of Year" = Table.AddColumn(#"Quarter of Year", "Week of Year", each Date.WeekOfYear([SalesDate]), Int64.Type),
+    #"Week of Month" = Table.AddColumn(#"Week of Year", "Week of Month", each Date.WeekOfMonth([SalesDate]), Int64.Type),
+    Day = Table.AddColumn(#"Week of Month", "Day", each Date.Day([SalesDate]), Int64.Type),
+    #"Day of Week" = Table.AddColumn(Day, "Day of Week", each Date.DayOfWeek([SalesDate]), Int64.Type),
+    #"Day of Year" = Table.AddColumn(#"Day of Week", "Day of Year", each Date.DayOfYear([SalesDate]), Int64.Type),
+    #"Day Name" = Table.AddColumn(#"Day of Year", "Day Name", each Date.DayOfWeekName([SalesDate]), type text),
+    #"Uppercased Text" = Table.AddColumn(#"Day Name", "UPPERCASE", each Text.Upper([Customer]), type text),
+    #"Lowercased Text" = Table.AddColumn(#"Uppercased Text", "lowercase", each Text.Lower([Customer]), type text),
+    #"Capitalize Each Word" = Table.AddColumn(#"Lowercased Text", "Capitalize Each Word", each Text.Proper([Customer]), type text),
+    #"Adding  Prefix to Text" = Table.AddColumn(#"Capitalize Each Word", "Prefix", each "Mr" & [Customer], type text)
+in
+    #"Adding  Prefix to Text"
